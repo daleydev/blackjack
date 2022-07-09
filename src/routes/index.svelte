@@ -1,6 +1,6 @@
 <script lang="ts">
-    import { handle_promise } from 'svelte/internal';
-import type { Card, Player } from '../types'
+    import type { Card, Player } from '../types'
+    import { GameStages }from '../types'
     let cards: Card[] = [];
     let junk: Card[] = [];
     let dealer: Player = {
@@ -12,10 +12,11 @@ import type { Card, Player } from '../types'
     }
     let players: Player[]
 
-    let seats = 4;
+    let maxNumPlayers = 4;
     let deckNum = 6;
     let currPlayer = -1;
     let seatsReady = false;
+    let stage = GameStages.PREPARE;
 
     function resetCards() {
         cards = []
@@ -24,7 +25,7 @@ import type { Card, Player } from '../types'
 
     function initSeats(index: number) {
         const newPlayers: Player[] = []
-        for (let i = 0; i< seats; i++) {
+        for (let i = 0; i< maxNumPlayers; i++) {
             newPlayers.push({
                 id: i === index ? Math.random().toString() : null,
                 name: 'player',
@@ -38,21 +39,21 @@ import type { Card, Player } from '../types'
         seatsReady = true
     }
 
-    function generateCards(num: number) {
+    function generateDecks(num: number) {
         resetCards()
-        initSeats(0)
         const suits = ['club', 'diamond', 'heart', 'spade'];
-        const values = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+        const values = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
+        const newCards = []
 
         for (let i = 0; i < num; i++) {
             for (const suit of suits) {
                 for (const value of values) {
-                    cards.push({ suit, value })
+                    newCards.push({ suit, value })
                 }
             }
         }
 
-        shuffle(cards)
+        cards = newCards
     }
 
     function shuffle(array: Card[]) {
@@ -99,16 +100,49 @@ import type { Card, Player } from '../types'
         console.log(dealer)
         console.log(players)
     }
+
+    function startGame() {
+        initSeats(0)
+        generateDecks(deckNum)
+        shuffle(cards)
+        initRound()
+
+        stage = GameStages.START
+    }
 </script>
 
-<h1>Welcome to SvelteKit</h1>
-<p>Visit <a href="https://kit.svelte.dev">kit.svelte.dev</a> to read the documentation</p>
+<div class="container">
+    <div class="header">
+        <h1>Blackjack</h1>
+    </div>
 
-<div>
-    Deck Number: 
-    <input bind:value={deckNum} type="number"/>
+    {#if stage === GameStages.PREPARE}
+        <div class="input-field">
+            <label for="decknum">Deck Number: </label>
+            <input id="decknum" bind:value={deckNum} type="number"/>
+            <span></span>
+        </div>
+
+        <div class="input-field">
+            <button on:click={() => startGame()}>start</button>
+        </div>
+    {/if}
+
+    {#if stage === GameStages.START}
+        <div>
+            <div class="dealer">
+                <h3>{ dealer.name }</h3>
+
+                {#each dealer.hands[0].cards as card}
+                    <div>{ `${card.suit} ${card.value}` }</div>
+                {/each}
+            </div>
+        </div>
+    {/if}
 </div>
-<button on:click={() => generateCards(deckNum)}>start</button>
+
+
+
 
 <div>Remaining cards: { cards.length }</div>
 <div>Junk cards: { junk.length }</div>
@@ -117,13 +151,6 @@ import type { Card, Player } from '../types'
 <button on:click={() => initRound()}>Deal</button>
 
 {#if seatsReady}
-    <div>
-        Dealer's Hands
-
-        {#each dealer.hands[0].cards as card}
-            <div>{ `${card.suit} ${card.value}` }</div>
-        {/each}
-    </div>
 
     <div>
         {#each players as player}
@@ -145,3 +172,30 @@ import type { Card, Player } from '../types'
     </div>
 {/if}
 
+<style>
+    .container {
+        border: 1px solid black;
+        margin: auto;
+        width: 100%;
+        height: 100vh;
+        max-width: 1280px;
+    }
+
+    .header {
+        margin: 2rem 0;
+        text-align: center;
+    }
+
+    .input-field {
+        margin: 2rem 0;
+        text-align: center;
+    }
+
+    .dealer {
+        text-align: center;
+    }
+
+    .card {
+        
+    }
+</style>

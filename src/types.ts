@@ -12,3 +12,9 @@ export interface Player {
     name: string
     hands: Hand[]
 }
+
+export enum GameStages {
+    PREPARE = 0,
+    INIT = 1,
+    START = 2,
+}
